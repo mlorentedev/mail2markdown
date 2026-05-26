@@ -21,6 +21,10 @@ class FileRunConfig:
     markdown_root: Path | None
     dry_run: bool
     verbose: bool
+    manifest: bool
+    routing_report: bool
+    vault_root: Path | None
+    sync: bool
 
 
 def load_run_config(config_path: Path) -> FileRunConfig:
@@ -39,6 +43,10 @@ def load_run_config(config_path: Path) -> FileRunConfig:
     markdown_root = _read_optional_path(payload=payload, config_path=config_path, key="markdown_root")
     dry_run = _read_bool(payload=payload, key="dry_run", default=False)
     verbose = _read_bool(payload=payload, key="verbose", default=False)
+    manifest = _read_bool(payload=payload, key="manifest", default=False)
+    routing_report = _read_bool(payload=payload, key="routing_report", default=False)
+    vault_root = _read_optional_path(payload=payload, config_path=config_path, key="vault_root")
+    sync = _read_bool(payload=payload, key="sync", default=False)
 
     return FileRunConfig(
         folder_paths=folder_paths,
@@ -52,6 +60,10 @@ def load_run_config(config_path: Path) -> FileRunConfig:
         markdown_root=markdown_root,
         dry_run=dry_run,
         verbose=verbose,
+        manifest=manifest,
+        routing_report=routing_report,
+        vault_root=vault_root,
+        sync=sync,
     )
 
 

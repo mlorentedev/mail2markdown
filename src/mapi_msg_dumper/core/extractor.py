@@ -6,10 +6,11 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-import win32com.client  # type: ignore[import-untyped]
+import win32com.client
 
 from mapi_msg_dumper.core.checkpoint import load_checkpoint, save_checkpoint
 from mapi_msg_dumper.core.filenames import markdown_file_path, message_file_path
+from mapi_msg_dumper.core.manifest import ManifestRow, ManifestWriter
 from mapi_msg_dumper.core.markdown import MarkdownEmail, render_email_markdown
 from mapi_msg_dumper.core.planning import (
     Cadence,
@@ -55,6 +56,7 @@ def run_extraction(
     markdown_root: Path | None = None,
     verbose: bool = False,
     max_windows: int | None = None,
+    manifest_writer: ManifestWriter | None = None,
 ) -> ExtractionSummary:
     if manual and end_date is None:
         raise ValueError("Manual mode requires --end-date.")
@@ -95,6 +97,7 @@ def run_extraction(
             verbose,
             folder_path,
             markdown_root.resolve() if markdown_root is not None else None,
+            manifest_writer,
         )
         window_summary.windows_processed = 1
         summary.merge(window_summary)
@@ -174,6 +177,7 @@ def _export_window(
     verbose: bool,
     folder_path: str,
     markdown_root: Path | None,
+    manifest_writer: ManifestWriter | None = None,
 ) -> ExtractionSummary:
     summary = ExtractionSummary()
 
@@ -220,6 +224,7 @@ def _export_window(
                     },
                 )
 
+            md_path_str = ""
             if markdown_root is not None:
                 md_path = markdown_file_path(markdown_root, received_at, subject, entry_id)
                 if md_path.exists():
@@ -247,8 +252,28 @@ def _export_window(
                     md_path.parent.mkdir(parents=True, exist_ok=True)
                     md_path.write_text(markdown, encoding="utf-8")
                     summary.markdown_written += 1
+                    md_path_str = str(md_path)
                     if verbose:
                         print(f"[mapi-msg-dumper] saved markdown {md_path}")
+
+            if manifest_writer is not None and not manifest_writer.already_written(entry_id):
+                manifest_writer.write(
+                    ManifestRow(
+                        entry_id=entry_id,
+                        received_at=received_at,
+                        subject=subject,
+                        sender_name=_safe_text(getattr(item, "SenderName", "")),
+                        sender_email=_safe_text(getattr(item, "SenderEmailAddress", "")),
+                        to=_safe_text(getattr(item, "To", "")),
+                        cc=_safe_text(getattr(item, "CC", "")),
+                        folder=folder_path,
+                        tags="",
+                        msg_path=str(msg_path),
+                        md_path=str(md_path_str),
+                        window_start=window.start.isoformat(),
+                        window_end=window.end.isoformat(),
+                    )
+                )
         except Exception as exc:
             summary.failed += 1
             if verbose:

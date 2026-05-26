@@ -23,6 +23,10 @@ def test_load_run_config_defaults(tmp_path: Path) -> None:
     assert parsed.markdown_root is None
     assert parsed.dry_run is False
     assert parsed.verbose is False
+    assert parsed.manifest is False
+    assert parsed.routing_report is False
+    assert parsed.vault_root is None
+    assert parsed.sync is False
 
 
 def test_load_run_config_with_folders_and_all_options(tmp_path: Path) -> None:
@@ -59,6 +63,10 @@ def test_load_run_config_with_folders_and_all_options(tmp_path: Path) -> None:
     assert parsed.markdown_root == tmp_path / "exports" / "markdown"
     assert parsed.dry_run is True
     assert parsed.verbose is True
+    assert parsed.manifest is False
+    assert parsed.routing_report is False
+    assert parsed.vault_root is None
+    assert parsed.sync is False
 
 
 def test_load_run_config_rejects_invalid_max_windows(tmp_path: Path) -> None:

@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
+from mapi_msg_dumper.core.checkpoint import load_checkpoint
 from mapi_msg_dumper.core.extractor import ExtractionSummary, run_extraction
 from mapi_msg_dumper.core.folders_config import checkpoint_name_for_folder, normalize_folder_path
+from mapi_msg_dumper.core.manifest import ManifestWriter
 from mapi_msg_dumper.core.planning import normalize_cadence, parse_iso_date
+from mapi_msg_dumper.core.routing import build_routing_report
 from mapi_msg_dumper.core.run_config import load_run_config
+from mapi_msg_dumper.core.vault_export import vault_import
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()
@@ -42,6 +46,12 @@ def extract(
     ),
     dry_run: bool = typer.Option(False, help="Evaluate and log without writing MSG files."),
     verbose: bool = typer.Option(False, "--verbose", help="Print detailed extraction progress."),
+    manifest: bool = typer.Option(False, help="Write CSV + JSONL manifest of extracted emails."),
+    routing_report: bool = typer.Option(False, help="Generate routing report from manifest."),
+    sync: bool = typer.Option(False, "--sync", help="Run from last checkpoint to today (incremental)."),
+    vault_root: Path | None = typer.Option(
+        None, help="Vault root path. Copies Markdown files into vault-structured folders per product."
+    ),
 ) -> None:
     try:
         if run_config is not None:
@@ -57,15 +67,38 @@ def extract(
             markdown_root = config.markdown_root
             dry_run = config.dry_run
             verbose = config.verbose
+            manifest = config.manifest
+            routing_report = config.routing_report
+            vault_root = config.vault_root
+            sync = config.sync
         else:
             parsed_start = _parse_optional_date(start_date)
             parsed_end = _parse_optional_date(end_date)
             normalized_cadence = normalize_cadence(cadence)
             folder_paths = [normalize_folder_path(folder)]
 
+        if sync:
+            if parsed_start is None:
+                chk = _resolve_checkpoint_for_folder(
+                    checkpoint_file, output_root, folder_paths[0], len(folder_paths) > 1
+                )
+                if chk is None:
+                    chk = output_root.resolve() / "checkpoint.json"
+                checkpoint_date = load_checkpoint(chk)
+                if checkpoint_date is None:
+                    console.print("[red]No checkpoint found. Run a full extraction first (without --sync).[/red]")
+                    raise typer.Exit(code=1)
+                parsed_start = checkpoint_date
+                if verbose:
+                    console.print(f"[cyan]Sync mode: resuming from[/cyan] {checkpoint_date.isoformat()}")
+            manual = False
+            if parsed_end is None:
+                parsed_end = datetime.now().date()
+
         folder_failures: list[tuple[str, str]] = []
         summary = ExtractionSummary()
         multi_folder = len(folder_paths) > 1
+        manifest_writer = _create_manifest_writer(output_root.resolve()) if manifest else None
 
         for target_folder in folder_paths:
             if verbose and multi_folder:
@@ -90,6 +123,7 @@ def extract(
                     markdown_root=markdown_root,
                     verbose=verbose,
                     max_windows=max_windows,
+                    manifest_writer=manifest_writer,
                 )
                 summary.merge(folder_summary)
             except Exception as exc:
@@ -106,7 +140,32 @@ def extract(
         dry_run=dry_run,
         folders_requested=len(folder_paths),
         folders_failed=len(folder_failures),
+        manifest=manifest,
     )
+
+    resolved_root = output_root.resolve()
+    if routing_report:
+        manifest_path = resolved_root / "manifest.csv"
+        if manifest_path.exists():
+            routing_root = resolved_root / "routing"
+            console.print(f"[green]Generating routing report:[/green] {routing_root}")
+            build_routing_report(manifest_path, routing_root)
+        else:
+            console.print("[yellow]Skipping routing report: no manifest.csv found at[/yellow] " + str(manifest_path))
+
+    if vault_root is not None and markdown_root is not None:
+        md_root = markdown_root.resolve()
+        if md_root.exists():
+            manifest_path = resolved_root / "manifest.csv"
+            if manifest_path.exists():
+                console.print(f"[green]Importing to vault:[/green] {vault_root}")
+                count = vault_import(manifest_path, md_root, vault_root.resolve())
+                console.print(f"[green]Imported {count} files to vault.[/green]")
+            else:
+                console.print("[yellow]Skipping vault import: no manifest.csv found[/yellow]")
+        else:
+            console.print(f"[yellow]Markdown root not found:[/yellow] {md_root}")
+
     if folder_failures:
         raise typer.Exit(code=1)
 
@@ -131,8 +190,20 @@ def _resolve_checkpoint_for_folder(
     return checkpoint_file / f"{token}.json"
 
 
+def _create_manifest_writer(output_root: Path) -> ManifestWriter:
+    return ManifestWriter(
+        csv_path=output_root / "manifest.csv",
+        jsonl_path=output_root / "manifest.jsonl",
+    )
+
+
 def _print_summary(
-    summary: ExtractionSummary, output_root: Path, dry_run: bool, folders_requested: int, folders_failed: int
+    summary: ExtractionSummary,
+    output_root: Path,
+    dry_run: bool,
+    folders_requested: int,
+    folders_failed: int,
+    manifest: bool = False,
 ) -> None:
     table = Table(title="Extraction Summary")
     table.add_column("Metric")
@@ -152,3 +223,5 @@ def _print_summary(
     console.print(f"Output root: {output_root}")
     console.print(f"Success log: {output_root / 'logs' / 'success.csv'}")
     console.print(f"Error log:   {output_root / 'logs' / 'errors.csv'}")
+    if manifest:
+        console.print(f"Manifest:    {output_root / 'manifest.csv'} (+ JSONL)")
