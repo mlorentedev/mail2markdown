@@ -4,8 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
 
-import win32com.client
-
 from mail2markdown.core.extractors.base import MessageSource, RawMessage
 from mail2markdown.core.planning import Window, build_received_filter
 
@@ -23,9 +21,8 @@ class OutlookMessageSource(MessageSource):
     def _ensure_namespace(self) -> Any:
         if self._namespace is None:
             import win32com.client
-        self._namespace = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+        self._namespace = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")("Outlook.Application").GetNamespace("MAPI")
         return self._namespace
-
     def iter_messages(  # noqa: D102
         self,
         folder_path: str,
