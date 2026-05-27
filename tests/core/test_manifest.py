@@ -1,10 +1,10 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from datetime import datetime
 from pathlib import Path
 
-from mapi_msg_dumper.core.manifest import ManifestRow, ManifestWriter
+from mail2markdown.core.manifest import ManifestRow, ManifestWriter
 
 
 def test_manifest_writer_creates_csv_and_jsonl(tmp_path: Path) -> None:

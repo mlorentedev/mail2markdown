@@ -1,9 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import shutil
 from pathlib import Path
 
-from mapi_msg_dumper.core.routing import _derive_product
+from mail2markdown.core.routing import _derive_product
 
 
 def vault_import(manifest_path: Path, markdown_root: Path, vault_root: Path) -> int:

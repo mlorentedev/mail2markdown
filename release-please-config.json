@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "python",
-      "package-name": "mapi-msg-dumper",
+      "package-name": "mail2markdown",
       "changelog-path": "CHANGELOG.md",
       "versioning": "default"
     }

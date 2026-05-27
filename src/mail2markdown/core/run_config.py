@@ -1,11 +1,11 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from mapi_msg_dumper.core.folders_config import load_folder_paths, normalize_folder_path
+from mail2markdown.core.folders_config import load_folder_paths, normalize_folder_path
 
 
 @dataclass(frozen=True)
@@ -25,6 +25,8 @@ class FileRunConfig:
     routing_report: bool
     vault_root: Path | None
     sync: bool
+    provider: str
+    thunderbird_config: dict[str, Any] | None
 
 
 def load_run_config(config_path: Path) -> FileRunConfig:
@@ -47,6 +49,10 @@ def load_run_config(config_path: Path) -> FileRunConfig:
     routing_report = _read_bool(payload=payload, key="routing_report", default=False)
     vault_root = _read_optional_path(payload=payload, config_path=config_path, key="vault_root")
     sync = _read_bool(payload=payload, key="sync", default=False)
+    provider = _read_optional_string(payload=payload, key="provider") or "outlook"
+    thunderbird_config = payload.get("thunderbird")
+    if thunderbird_config is not None and not isinstance(thunderbird_config, dict):
+        raise ValueError("run config key 'thunderbird' must be an object.")
 
     return FileRunConfig(
         folder_paths=folder_paths,
@@ -64,6 +70,8 @@ def load_run_config(config_path: Path) -> FileRunConfig:
         routing_report=routing_report,
         vault_root=vault_root,
         sync=sync,
+        provider=provider,
+        thunderbird_config=thunderbird_config,
     )
 
 

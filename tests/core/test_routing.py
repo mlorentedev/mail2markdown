@@ -1,10 +1,10 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from mapi_msg_dumper.core.routing import build_routing_report
+from mail2markdown.core.routing import build_routing_report
 
 
 def test_build_routing_report_creates_summary_and_product_files(tmp_path: Path) -> None:

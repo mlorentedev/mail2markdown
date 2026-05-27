@@ -1,7 +1,7 @@
-from datetime import datetime
+﻿from datetime import datetime
 from pathlib import Path
 
-from mapi_msg_dumper.core.markdown import MarkdownEmail, render_email_markdown
+from mail2markdown.core.markdown import MarkdownEmail, render_email_markdown
 
 
 def test_render_email_markdown_contains_metadata_and_body() -> None:

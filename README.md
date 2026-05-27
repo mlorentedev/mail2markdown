@@ -1,10 +1,10 @@
-# mapi-msg-dumper
+# mail2markdown
 
-Local Outlook extraction engine using COM (`pywin32`) to export historical emails as `.msg` and optional AI-friendly Markdown.
+Local email extraction engine using COM (`pywin32`) or `.mbox` to export historical emails as `.msg` and optional AI-friendly Markdown.
 
 ## Why
 
-When Microsoft Graph is blocked by tenant policy, this tool works directly against the authenticated Outlook desktop session.
+When Microsoft Graph is blocked by tenant policy, this tool works directly against the authenticated Outlook desktop session. It also supports Thunderbird `.mbox` profiles via `--provider thunderbird`.
 
 ## Install
 
@@ -17,7 +17,7 @@ poetry install
 Use one config file only (`run.json`), then always run:
 
 ```powershell
-poetry run mapi-msg-dumper --run-config .\run.json
+poetry run mail2markdown --run-config .\run.json
 ```
 
 `run.json` is local-only and ignored by git (`.gitignore`).

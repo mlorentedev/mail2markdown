@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
@@ -6,24 +6,18 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-import win32com.client
-
-from mapi_msg_dumper.core.checkpoint import load_checkpoint, save_checkpoint
-from mapi_msg_dumper.core.filenames import markdown_file_path, message_file_path
-from mapi_msg_dumper.core.manifest import ManifestRow, ManifestWriter
-from mapi_msg_dumper.core.markdown import MarkdownEmail, render_email_markdown
-from mapi_msg_dumper.core.planning import (
+from mail2markdown.core.checkpoint import load_checkpoint, save_checkpoint
+from mail2markdown.core.extractors import MessageSource, create_source
+from mail2markdown.core.filenames import markdown_file_path, message_file_path
+from mail2markdown.core.manifest import ManifestRow, ManifestWriter
+from mail2markdown.core.markdown import MarkdownEmail, render_email_markdown
+from mail2markdown.core.planning import (
     Cadence,
     Window,
     apply_window_limit,
     build_auto_windows,
     build_manual_window,
-    build_received_filter,
 )
-
-OL_FOLDER_INBOX = 6
-OL_MAIL_ITEM = 43
-OL_MSG_UNICODE = 3
 
 
 @dataclass
@@ -53,6 +47,8 @@ def run_extraction(
     manual: bool,
     checkpoint_path: Path | None,
     dry_run: bool,
+    provider: str = "outlook",
+    provider_config: dict[str, Any] | None = None,
     markdown_root: Path | None = None,
     verbose: bool = False,
     max_windows: int | None = None,
@@ -71,24 +67,28 @@ def run_extraction(
     if not windows:
         return summary
 
+    source = _create_source(provider, provider_config or {})
+
     if verbose:
         mode = "manual" if manual else f"auto/{cadence}"
-        print(
-            f"[mapi-msg-dumper] mode={mode} folder={folder_path} windows={len(windows)} "
-            f"window_limit={max_windows if max_windows is not None else 'none'} dry_run={str(dry_run).lower()}"
+        console = _get_console()
+        console.print(
+            f"[mapi-msg-dumper] provider={provider} mode={mode} folder={folder_path} "
+            f"windows={len(windows)} window_limit={max_windows if max_windows is not None else 'none'} "
+            f"dry_run={str(dry_run).lower()}"
         )
-
-    namespace = _connect_namespace()
-    folder = _resolve_folder(namespace, folder_path)
 
     success_log = destination / "logs" / "success.csv"
     error_log = destination / "logs" / "errors.csv"
 
     for window in windows:
         if verbose:
-            print(f"[mapi-msg-dumper] window {window.start.isoformat()} -> {window.end.isoformat()}")
+            console = _get_console()
+            console.print(f"[cyan]window[/cyan] {window.start.isoformat()} -> {window.end.isoformat()}")
+
         window_summary = _export_window(
-            folder,
+            source,
+            folder_path,
             destination,
             window,
             success_log,
@@ -104,7 +104,8 @@ def run_extraction(
         if not manual and not dry_run:
             save_checkpoint(checkpoint, window.end.date())
             if verbose:
-                print(f"[mapi-msg-dumper] checkpoint updated to {window.end.date().isoformat()}")
+                console = _get_console()
+                console.print(f"[cyan]checkpoint updated to[/cyan] {window.end.date().isoformat()}")
 
     return summary
 
@@ -128,90 +129,51 @@ def _build_windows(
     return build_auto_windows(first_start, end_date, cadence)
 
 
-def _connect_namespace() -> Any:
-    return win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
-
-
-def _resolve_folder(namespace: Any, folder_path: str) -> Any:
-    parts = [part.strip() for part in folder_path.split("\\") if part.strip()]
-    if not parts:
-        raise ValueError("Folder path cannot be empty.")
-
-    if parts[0].lower() == "inbox":
-        return _walk_folder_path(namespace.GetDefaultFolder(OL_FOLDER_INBOX), parts[1:])
-
-    try:
-        root_folder = namespace.DefaultStore.GetRootFolder()
-    except Exception as exc:
-        raise ValueError("Cannot resolve default Outlook store root folder.") from exc
-    return _walk_folder_path(root_folder, parts)
-
-
-def _walk_folder_path(start_folder: Any, segments: list[str]) -> Any:
-    folder = start_folder
-    for segment in segments:
-        folder = _get_child_folder(folder, segment)
-    return folder
-
-
-def _get_child_folder(parent: Any, segment: str) -> Any:
-    try:
-        return parent.Folders.Item(segment)
-    except Exception:
-        count = int(getattr(parent.Folders, "Count", 0))
-        for index in range(1, count + 1):
-            child = parent.Folders.Item(index)
-            if str(getattr(child, "Name", "")).strip().lower() == segment.lower():
-                return child
-    parent_name = str(getattr(parent, "Name", "<root>"))
-    raise ValueError(f"Folder segment '{segment}' not found under '{parent_name}'.")
+def _create_source(provider: str, config: dict[str, Any]) -> MessageSource:
+    kwargs: dict[str, object] = {}
+    if "profile_path" in config:
+        kwargs["profile_path"] = config["profile_path"]
+    return create_source(provider, **kwargs)
 
 
 def _export_window(
-    folder: Any,
+    source: MessageSource,
+    folder_path: str,
     output_root: Path,
     window: Window,
     success_log: Path,
     error_log: Path,
     dry_run: bool,
     verbose: bool,
-    folder_path: str,
+    folder_path_label: str,
     markdown_root: Path | None,
     manifest_writer: ManifestWriter | None = None,
 ) -> ExtractionSummary:
     summary = ExtractionSummary()
 
-    items = folder.Items
-    items.Sort("[ReceivedTime]", False)
-    scoped = items.Restrict(build_received_filter(window))
+    messages = list(source.iter_messages(folder_path, window.start, window.end))
 
-    item = scoped.GetFirst()
-    while item is not None:
-        entry_id = ""
-        subject = ""
+    for raw_msg in messages:
+        entry_id = raw_msg.entry_id
+        subject = raw_msg.subject
+
         try:
-            if int(getattr(item, "Class", 0)) != OL_MAIL_ITEM:
-                summary.skipped_non_mail += 1
-                continue
-
-            entry_id = str(getattr(item, "EntryID", ""))
-            subject = str(getattr(item, "Subject", ""))
-            received_at = _received_datetime(item)
-            msg_path = message_file_path(output_root, received_at, subject, entry_id)
+            msg_path = message_file_path(output_root, raw_msg.received_at, subject, entry_id)
 
             if msg_path.exists():
                 summary.skipped_existing += 1
                 if verbose:
-                    print(f"[mapi-msg-dumper] skip existing {msg_path}")
+                    console = _get_console()
+                    console.print(f"[dim]skip existing[/dim] {msg_path}")
             else:
                 if not dry_run:
-                    msg_path.parent.mkdir(parents=True, exist_ok=True)
-                    item.SaveAs(str(msg_path), OL_MSG_UNICODE)
+                    source.save_message(raw_msg, msg_path)
 
                 summary.exported += 1
                 if verbose:
+                    console = _get_console()
                     action = "simulated save" if dry_run else "saved"
-                    print(f"[mapi-msg-dumper] {action} {msg_path}")
+                    console.print(f"[green]{action}[/green] {msg_path}")
                 _append_csv(
                     success_log,
                     ["window_start", "window_end", "entry_id", "saved_path", "dry_run"],
@@ -226,50 +188,53 @@ def _export_window(
 
             md_path_str = ""
             if markdown_root is not None:
-                md_path = markdown_file_path(markdown_root, received_at, subject, entry_id)
+                md_path = markdown_file_path(markdown_root, raw_msg.received_at, subject, entry_id)
                 if md_path.exists():
                     if verbose:
-                        print(f"[mapi-msg-dumper] skip existing markdown {md_path}")
+                        console = _get_console()
+                        console.print(f"[dim]skip existing markdown[/dim] {md_path}")
                 elif dry_run:
                     if verbose:
-                        print(f"[mapi-msg-dumper] simulated markdown {md_path}")
+                        console = _get_console()
+                        console.print(f"[dim]simulated markdown[/dim] {md_path}")
                 else:
-                    body = _safe_text(getattr(item, "Body", ""))
                     markdown = render_email_markdown(
                         MarkdownEmail(
-                            received_at=received_at,
+                            received_at=raw_msg.received_at,
                             subject=subject,
-                            sender_name=_safe_text(getattr(item, "SenderName", "")),
-                            sender_email=_safe_text(getattr(item, "SenderEmailAddress", "")),
-                            to=_safe_text(getattr(item, "To", "")),
-                            cc=_safe_text(getattr(item, "CC", "")),
+                            sender_name=raw_msg.sender_name,
+                            sender_email=raw_msg.sender_email,
+                            to=raw_msg.to,
+                            cc=raw_msg.cc,
                             entry_id=entry_id,
                             source_msg_path=msg_path,
-                            folder_path=folder_path,
+                            folder_path=folder_path_label,
+                            provider=source.__class__.__name__.replace("MessageSource", "").lower(),
                         ),
-                        body=body,
+                        body=raw_msg.body,
                     )
                     md_path.parent.mkdir(parents=True, exist_ok=True)
                     md_path.write_text(markdown, encoding="utf-8")
                     summary.markdown_written += 1
                     md_path_str = str(md_path)
                     if verbose:
-                        print(f"[mapi-msg-dumper] saved markdown {md_path}")
+                        console = _get_console()
+                        console.print(f"[dim]saved markdown[/dim] {md_path}")
 
             if manifest_writer is not None and not manifest_writer.already_written(entry_id):
                 manifest_writer.write(
                     ManifestRow(
                         entry_id=entry_id,
-                        received_at=received_at,
+                        received_at=raw_msg.received_at,
                         subject=subject,
-                        sender_name=_safe_text(getattr(item, "SenderName", "")),
-                        sender_email=_safe_text(getattr(item, "SenderEmailAddress", "")),
-                        to=_safe_text(getattr(item, "To", "")),
-                        cc=_safe_text(getattr(item, "CC", "")),
-                        folder=folder_path,
+                        sender_name=raw_msg.sender_name,
+                        sender_email=raw_msg.sender_email,
+                        to=raw_msg.to,
+                        cc=raw_msg.cc,
+                        folder=folder_path_label,
                         tags="",
                         msg_path=str(msg_path),
-                        md_path=str(md_path_str),
+                        md_path=md_path_str,
                         window_start=window.start.isoformat(),
                         window_end=window.end.isoformat(),
                     )
@@ -277,7 +242,8 @@ def _export_window(
         except Exception as exc:
             summary.failed += 1
             if verbose:
-                print(f"[mapi-msg-dumper] error entry_id={entry_id or 'unknown'} subject={subject!r}: {exc}")
+                console = _get_console()
+                console.print(f"[red]error[/red] entry_id={entry_id or 'unknown'} subject={subject!r}: {exc}")
             _append_csv(
                 error_log,
                 ["window_start", "window_end", "entry_id", "subject", "error"],
@@ -289,23 +255,14 @@ def _export_window(
                     "error": str(exc),
                 },
             )
-        finally:
-            item = scoped.GetNext()
 
     return summary
 
 
-def _received_datetime(item: Any) -> datetime:
-    received = getattr(item, "ReceivedTime", None)
-    if isinstance(received, datetime):
-        return received.replace(tzinfo=None)
-    raise ValueError("Item has no valid ReceivedTime.")
+def _get_console() -> Any:
+    from rich.console import Console
 
-
-def _safe_text(value: Any) -> str:
-    if value is None:
-        return ""
-    return str(value)
+    return Console()
 
 
 def _append_csv(path: Path, fieldnames: list[str], row: dict[str, str]) -> None:

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -16,16 +16,18 @@ class MarkdownEmail:
     entry_id: str
     source_msg_path: Path
     folder_path: str
+    provider: str = "outlook"
 
 
 def render_email_markdown(email: MarkdownEmail, body: str) -> str:
     normalized_body = body.replace("\r\n", "\n").replace("\r", "\n").strip() or "(empty body)"
     safe_subject = _single_line(email.subject) or "no-subject"
     source_msg = email.source_msg_path.as_posix()
+    provider_type = f"{email.provider}-email"
     return "\n".join(
         [
             "---",
-            'type: "outlook-email"',
+            f'type: "{provider_type}"',
             f'received_at: "{email.received_at.isoformat()}"',
             f'subject: "{_escape_yaml(safe_subject)}"',
             f'from_name: "{_escape_yaml(_single_line(email.sender_name))}"',

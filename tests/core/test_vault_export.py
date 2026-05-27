@@ -1,10 +1,10 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from mapi_msg_dumper.core.vault_export import vault_import
+from mail2markdown.core.vault_export import vault_import
 
 
 def test_vault_import_copies_files_by_product(tmp_path: Path) -> None:

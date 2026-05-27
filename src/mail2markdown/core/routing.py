@@ -1,11 +1,11 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import csv
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from mapi_msg_dumper.core.folders_config import normalize_folder_path
+from mail2markdown.core.folders_config import normalize_folder_path
 
 
 def build_routing_report(manifest_path: Path, routing_root: Path) -> None:

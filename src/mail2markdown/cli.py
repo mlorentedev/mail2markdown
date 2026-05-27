@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import date, datetime
 from pathlib import Path
@@ -7,14 +7,14 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from mapi_msg_dumper.core.checkpoint import load_checkpoint
-from mapi_msg_dumper.core.extractor import ExtractionSummary, run_extraction
-from mapi_msg_dumper.core.folders_config import checkpoint_name_for_folder, normalize_folder_path
-from mapi_msg_dumper.core.manifest import ManifestWriter
-from mapi_msg_dumper.core.planning import normalize_cadence, parse_iso_date
-from mapi_msg_dumper.core.routing import build_routing_report
-from mapi_msg_dumper.core.run_config import load_run_config
-from mapi_msg_dumper.core.vault_export import vault_import
+from mail2markdown.core.checkpoint import load_checkpoint
+from mail2markdown.core.extractor import ExtractionSummary, run_extraction
+from mail2markdown.core.folders_config import checkpoint_name_for_folder, normalize_folder_path
+from mail2markdown.core.manifest import ManifestWriter
+from mail2markdown.core.planning import normalize_cadence, parse_iso_date
+from mail2markdown.core.routing import build_routing_report
+from mail2markdown.core.run_config import load_run_config
+from mail2markdown.core.vault_export import vault_import
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()
@@ -52,6 +52,9 @@ def extract(
     vault_root: Path | None = typer.Option(
         None, help="Vault root path. Copies Markdown files into vault-structured folders per product."
     ),
+    provider: str = typer.Option(
+        "outlook", "--provider", help="Email provider: outlook or thunderbird."
+    ),
 ) -> None:
     try:
         if run_config is not None:
@@ -71,6 +74,8 @@ def extract(
             routing_report = config.routing_report
             vault_root = config.vault_root
             sync = config.sync
+            provider = config.provider or "outlook"
+            thunderbird_config = config.thunderbird_config
         else:
             parsed_start = _parse_optional_date(start_date)
             parsed_end = _parse_optional_date(end_date)
@@ -120,6 +125,8 @@ def extract(
                     manual=manual,
                     checkpoint_path=effective_checkpoint,
                     dry_run=dry_run,
+                    provider=provider,
+                    provider_config=thunderbird_config or {},
                     markdown_root=markdown_root,
                     verbose=verbose,
                     max_windows=max_windows,

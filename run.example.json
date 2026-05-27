@@ -1,4 +1,5 @@
 {
+  "provider": "outlook",
   "folders": [
     "Shared Inbox\\Product-A",
     "Shared Inbox\\Product-B",

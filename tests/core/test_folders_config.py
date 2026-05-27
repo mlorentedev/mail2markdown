@@ -1,7 +1,7 @@
-import json
+﻿import json
 from pathlib import Path
 
-from mapi_msg_dumper.core.folders_config import checkpoint_name_for_folder, load_folder_paths, normalize_folder_path
+from mail2markdown.core.folders_config import checkpoint_name_for_folder, load_folder_paths, normalize_folder_path
 
 
 def test_normalize_folder_path_standardizes_separators() -> None:

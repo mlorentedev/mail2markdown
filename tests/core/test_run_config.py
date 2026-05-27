@@ -1,9 +1,9 @@
-import json
+﻿import json
 from pathlib import Path
 
 import pytest
 
-from mapi_msg_dumper.core.run_config import load_run_config
+from mail2markdown.core.run_config import load_run_config
 
 
 def test_load_run_config_defaults(tmp_path: Path) -> None:

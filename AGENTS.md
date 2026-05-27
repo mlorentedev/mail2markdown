@@ -32,7 +32,7 @@ Senior software engineer. **Goal:** Maximum development velocity with Competence
 
 ## Project Context
 
-- **Repo:** `mapi-msg-dumper` (Windows-only Python CLI for Outlook COM email extraction)
+- **Repo:** `mail2markdown` (Windows-only Python CLI for Outlook/Thunderbird email extraction)
 - **Vault:** `10_projects/mapi-msg-dumper/` in `%USERPROFILE%\Projects\knowledge\`
 - **Stack:** Python 3.12+, Poetry, Typer + Rich, pywin32 (COM interop), pytest, Ruff, mypy
 - **CI:** GitHub Actions (ruff + mypy + pytest), release-please for semantic releases
@@ -42,9 +42,9 @@ Senior software engineer. **Goal:** Maximum development velocity with Competence
 
 | File | Purpose |
 |------|---------|
-| `src/mapi_msg_dumper/main.py` | CLI entrypoint (Typer) |
-| `src/mapi_msg_dumper/cli.py` | CLI wiring |
-| `src/mapi_msg_dumper/core/` | Extraction engine (COM session, folder resolution, window planner, checkpoint) |
+| `src/mail2markdown/main.py` | CLI entrypoint (Typer) |
+| `src/mail2markdown/cli.py` | CLI wiring |
+| `src/mail2markdown/core/` | Extraction engine (COM session, folder resolution, window planner, checkpoint) |
 | `tests/core/` | Test suite |
 | `run.example.json` | Sanitized config template |
 | `pyproject.toml` | Project config (Poetry, Ruff, mypy, pytest) |
