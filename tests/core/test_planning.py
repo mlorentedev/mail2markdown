@@ -1,8 +1,8 @@
-from datetime import date
+﻿from datetime import date
 
 import pytest
 
-from mapi_msg_dumper.core.planning import apply_window_limit, build_auto_windows, build_received_filter
+from mail2markdown.core.planning import apply_window_limit, build_auto_windows, build_received_filter
 
 
 def test_build_auto_windows_monthly_partial_first_month() -> None:
