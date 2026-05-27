@@ -1,7 +1,7 @@
-from datetime import date
+﻿from datetime import date
 from pathlib import Path
 
-from mapi_msg_dumper.core.checkpoint import load_checkpoint, save_checkpoint
+from mail2markdown.core.checkpoint import load_checkpoint, save_checkpoint
 
 
 def test_checkpoint_round_trip(tmp_path: Path) -> None:

@@ -1,7 +1,7 @@
-from datetime import datetime
+﻿from datetime import datetime
 from pathlib import Path
 
-from mapi_msg_dumper.core.filenames import markdown_file_path, message_file_path, sanitize_subject
+from mail2markdown.core.filenames import markdown_file_path, message_file_path, sanitize_subject
 
 
 def test_sanitize_subject_replaces_invalid_ntfs_chars() -> None:
