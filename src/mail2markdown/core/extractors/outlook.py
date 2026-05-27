@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
@@ -21,8 +21,10 @@ class OutlookMessageSource(MessageSource):
     def _ensure_namespace(self) -> Any:
         if self._namespace is None:
             import win32com.client
-        self._namespace = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")("Outlook.Application").GetNamespace("MAPI")
+
+            self._namespace = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         return self._namespace
+
     def iter_messages(  # noqa: D102
         self,
         folder_path: str,
