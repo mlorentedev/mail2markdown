@@ -22,7 +22,8 @@ class OutlookMessageSource(MessageSource):
 
     def _ensure_namespace(self) -> Any:
         if self._namespace is None:
-            self._namespace = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+            import win32com.client
+        self._namespace = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         return self._namespace
 
     def iter_messages(  # noqa: D102
