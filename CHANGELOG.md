@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/mlorentedev/mail2markdown/compare/mail2markdown-v0.2.0...mail2markdown-v0.2.1) (2026-05-29)
+
+
+### Documentation
+
+* migrate project-bound knowledge into docs/ (KPM-016) ([#9](https://github.com/mlorentedev/mail2markdown/issues/9)) ([c5ed2a4](https://github.com/mlorentedev/mail2markdown/commit/c5ed2a46f33b32b523b904f26e69b6beb8ac3fac))
+
 ## [0.2.0](https://github.com/mlorentedev/mail2markdown/compare/mail2markdown-v0.1.0...mail2markdown-v0.2.0) (2026-05-27)
 
 
