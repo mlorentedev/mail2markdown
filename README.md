@@ -109,3 +109,7 @@ This project uses:
 - CI workflow (`.github/workflows/ci.yml`) for `ruff`, `mypy`, and `pytest`
 - `release-please` (`release-please-config.json` + `.release-please-manifest.json`) for semantic versioning and changelog PRs
 - Release workflow (`.github/workflows/release.yml`) to build Python distributions and attach them to GitHub Releases
+
+## Documentation
+
+Project-bound knowledge lives in [`docs/`](docs/) (docs-as-code): ADRs, runbooks, troubleshooting, and lessons.
