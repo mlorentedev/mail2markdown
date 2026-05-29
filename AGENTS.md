@@ -22,8 +22,8 @@ Senior software engineer. **Goal:** Maximum development velocity with Competence
 ## Standing Orders (Non-Negotiable)
 
 1. **Automate, don't instruct.** If a task is repeatable, encode it: script, CI pipeline, CLI flag. Never give manual steps for repeatable work.
-2. **SSOT.** Code lives in git. Knowledge lives in the vault at `%USERPROFILE%\Projects\knowledge\`. Never duplicate across both.
-3. **Vault hygiene in-session.** After fixing a bug -> write `50-troubleshooting/`. After architecture decision -> `30-architecture/adr-XXX.md`. After useful trick -> `90-lessons.md`. Do it now, not "later".
+2. **SSOT.** Code + project-bound docs (`docs/`) live in git. Cross-project knowledge lives in the vault at `%USERPROFILE%\Projects\knowledge\`. Never duplicate across both.
+3. **Docs hygiene in-session.** After fixing a bug -> write `docs/troubleshooting/`. After architecture decision -> `docs/adr/adr-XXX.md`. After useful trick -> `docs/lessons.md`. Do it now, not "later".
 4. **Clean as you go.** Dead code, stale comments, orphan files — fix when you see them.
 5. **Consult patterns before architectural decisions.** Query `00_meta/patterns/` in the vault via Hive MCP. Cross-cutting patterns live in `00_meta/patterns/`, project-specific ones in the vault project.
 6. **Enterprise-grade or nothing.** No hacks, no quick-and-dirty, no "it works for now".
@@ -104,9 +104,9 @@ These are the patterns most relevant to this project. Query the vault for full b
 
 ## Neural Hive Protocol
 
-**CORE PRINCIPLE:** Code lives in Git. Knowledge lives in the vault.
+**CORE PRINCIPLE:** Code + project-bound docs live in Git (`docs/`). Cross-project knowledge lives in the vault.
 **COMMIT POLICY:** Stage changes only. NEVER commit.
-**NEVER** create `docs/`, `TODO.md` or `CHANGELOG.md` in the repo.
+Project-bound knowledge lives in `docs/` (ADRs in `docs/adr/`, runbooks in `docs/runbooks/`, `docs/lessons.md`). Tasks/roadmap stay in the vault (forge issues for tactical work).
 
 ### Phase 1: Context Sync (Read First)
 
@@ -125,8 +125,8 @@ These are the patterns most relevant to this project. Query the vault for full b
 ### Phase 3: Knowledge Crystallization (Write Back)
 
 - **Backlog:** Mark items `[x]` and update progress bar
-- **Lessons:** Append to `90-lessons.md` in vault
-- **ADRs:** Write to `30-architecture/` in vault
+- **Lessons:** Append to `docs/lessons.md` in the repo
+- **ADRs:** Write to `docs/adr/` in the repo
 - **Promotion:** If pattern is generic, promote to `00_meta/patterns/`
 
 ## MCP Server Usage Rules
@@ -212,7 +212,7 @@ Stop generation and warn on:
 
 ## Curation Workflow
 
-After extraction is complete, the agent curates emails for vault import following the rubric at `vault: mapi-msg-dumper/50-curation/curation-rules.md`.
+After extraction is complete, the agent curates emails for vault import following the rubric at `docs/runbooks/curation-rules.md`.
 
 ### Pre-flight
 1. Read `curation-rules.md` — this is the SSOT for what to keep/skip
