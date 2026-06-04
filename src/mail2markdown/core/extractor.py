@@ -264,6 +264,12 @@ def _get_console() -> Any:
     return Console()
 
 
+def _safe_str(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value).encode("utf-8", errors="replace").decode("utf-8")
+
+
 def _append_csv(path: Path, fieldnames: list[str], row: dict[str, str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     file_exists = path.exists()
@@ -271,4 +277,4 @@ def _append_csv(path: Path, fieldnames: list[str], row: dict[str, str]) -> None:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         if not file_exists:
             writer.writeheader()
-        writer.writerow(row)
+        writer.writerow({k: _safe_str(v) for k, v in row.items()})
