@@ -14,19 +14,19 @@ def test_load_run_config_defaults(tmp_path: Path) -> None:
 
     assert parsed.folder_paths == ["Inbox"]
     assert parsed.output_root == tmp_path / "exports"
-    assert parsed.cadence == "monthly"
-    assert parsed.start_date is None
-    assert parsed.end_date is None
-    assert parsed.manual is False
-    assert parsed.checkpoint_file is None
-    assert parsed.max_windows is None
-    assert parsed.markdown_root is None
+    assert parsed.window.cadence == "monthly"
+    assert parsed.window.start_date is None
+    assert parsed.window.end_date is None
+    assert parsed.window.manual is False
+    assert parsed.window.checkpoint_file is None
+    assert parsed.window.max_windows is None
+    assert parsed.output.markdown_root is None
     assert parsed.dry_run is False
     assert parsed.verbose is False
-    assert parsed.manifest is False
-    assert parsed.routing_report is False
-    assert parsed.vault_root is None
-    assert parsed.sync is False
+    assert parsed.output.manifest is False
+    assert parsed.output.routing_report is False
+    assert parsed.output.vault_root is None
+    assert parsed.output.sync is False
 
 
 def test_load_run_config_with_folders_and_all_options(tmp_path: Path) -> None:
@@ -54,19 +54,19 @@ def test_load_run_config_with_folders_and_all_options(tmp_path: Path) -> None:
 
     assert parsed.folder_paths == [r"Inbox\Finance", r"Inbox\HR"]
     assert parsed.output_root == tmp_path / "exports"
-    assert parsed.cadence == "biweekly"
-    assert parsed.start_date == "2020-01-01"
-    assert parsed.end_date == "2020-01-31"
-    assert parsed.manual is True
-    assert parsed.checkpoint_file == tmp_path / "exports" / "checkpoints" / "folder.json"
-    assert parsed.max_windows == 2
-    assert parsed.markdown_root == tmp_path / "exports" / "markdown"
+    assert parsed.window.cadence == "biweekly"
+    assert parsed.window.start_date == "2020-01-01"
+    assert parsed.window.end_date == "2020-01-31"
+    assert parsed.window.manual is True
+    assert parsed.window.checkpoint_file == tmp_path / "exports" / "checkpoints" / "folder.json"
+    assert parsed.window.max_windows == 2
+    assert parsed.output.markdown_root == tmp_path / "exports" / "markdown"
     assert parsed.dry_run is True
     assert parsed.verbose is True
-    assert parsed.manifest is False
-    assert parsed.routing_report is False
-    assert parsed.vault_root is None
-    assert parsed.sync is False
+    assert parsed.output.manifest is False
+    assert parsed.output.routing_report is False
+    assert parsed.output.vault_root is None
+    assert parsed.output.sync is False
 
 
 def test_load_run_config_rejects_invalid_max_windows(tmp_path: Path) -> None:
@@ -85,5 +85,5 @@ def test_load_run_config_accepts_utf8_bom(tmp_path: Path) -> None:
     parsed = load_run_config(run_config)
 
     assert parsed.folder_paths == [r"Shared Inbox\Product-A"]
-    assert parsed.manual is True
-    assert parsed.start_date == "2025-01-15"
+    assert parsed.window.manual is True
+    assert parsed.window.start_date == "2025-01-15"

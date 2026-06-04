@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
@@ -137,125 +137,140 @@ def _create_source(provider: str, config: dict[str, Any]) -> MessageSource:
 
 
 def _export_window(
-    source: MessageSource,
-    folder_path: str,
-    output_root: Path,
-    window: Window,
-    success_log: Path,
-    error_log: Path,
-    dry_run: bool,
-    verbose: bool,
-    folder_path_label: str,
-    markdown_root: Path | None,
+    source: MessageSource, folder_path: str, output_root: Path, window: Window,
+    success_log: Path, error_log: Path, dry_run: bool, verbose: bool,
+    folder_path_label: str, markdown_root: Path | None,
     manifest_writer: ManifestWriter | None = None,
 ) -> ExtractionSummary:
     summary = ExtractionSummary()
-
-    messages = list(source.iter_messages(folder_path, window.start, window.end))
-
-    for raw_msg in messages:
-        entry_id = raw_msg.entry_id
-        subject = raw_msg.subject
-
+    for raw_msg in source.iter_messages(folder_path, window.start, window.end):
         try:
-            msg_path = message_file_path(output_root, raw_msg.received_at, subject, entry_id)
-
-            if msg_path.exists():
-                summary.skipped_existing += 1
-                if verbose:
-                    console = _get_console()
-                    console.print(f"[dim]skip existing[/dim] {msg_path}")
-            else:
-                if not dry_run:
-                    source.save_message(raw_msg, msg_path)
-
-                summary.exported += 1
-                if verbose:
-                    console = _get_console()
-                    action = "simulated save" if dry_run else "saved"
-                    console.print(f"[green]{action}[/green] {msg_path}")
-                _append_csv(
-                    success_log,
-                    ["window_start", "window_end", "entry_id", "saved_path", "dry_run"],
-                    {
-                        "window_start": window.start.isoformat(),
-                        "window_end": window.end.isoformat(),
-                        "entry_id": entry_id,
-                        "saved_path": str(msg_path),
-                        "dry_run": str(dry_run).lower(),
-                    },
-                )
-
-            md_path_str = ""
-            if markdown_root is not None:
-                md_path = markdown_file_path(markdown_root, raw_msg.received_at, subject, entry_id)
-                if md_path.exists():
-                    if verbose:
-                        console = _get_console()
-                        console.print(f"[dim]skip existing markdown[/dim] {md_path}")
-                elif dry_run:
-                    if verbose:
-                        console = _get_console()
-                        console.print(f"[dim]simulated markdown[/dim] {md_path}")
-                else:
-                    markdown = render_email_markdown(
-                        MarkdownEmail(
-                            received_at=raw_msg.received_at,
-                            subject=subject,
-                            sender_name=raw_msg.sender_name,
-                            sender_email=raw_msg.sender_email,
-                            to=raw_msg.to,
-                            cc=raw_msg.cc,
-                            entry_id=entry_id,
-                            source_msg_path=msg_path,
-                            folder_path=folder_path_label,
-                            provider=source.__class__.__name__.replace("MessageSource", "").lower(),
-                        ),
-                        body=raw_msg.body,
-                    )
-                    md_path.parent.mkdir(parents=True, exist_ok=True)
-                    md_path.write_text(markdown, encoding="utf-8")
-                    summary.markdown_written += 1
-                    md_path_str = str(md_path)
-                    if verbose:
-                        console = _get_console()
-                        console.print(f"[dim]saved markdown[/dim] {md_path}")
-
-            if manifest_writer is not None and not manifest_writer.already_written(entry_id):
-                manifest_writer.write(
-                    ManifestRow(
-                        entry_id=entry_id,
-                        received_at=raw_msg.received_at,
-                        subject=subject,
-                        sender_name=raw_msg.sender_name,
-                        sender_email=raw_msg.sender_email,
-                        to=raw_msg.to,
-                        cc=raw_msg.cc,
-                        folder=folder_path_label,
-                        msg_path=str(msg_path),
-                        md_path=md_path_str,
-                        window_start=window.start.isoformat(),
-                        window_end=window.end.isoformat(),
-                    )
-                )
+            msg_path = message_file_path(output_root, raw_msg.received_at, raw_msg.subject, raw_msg.entry_id)
+            _handle_message_save(source, raw_msg, msg_path, dry_run, verbose, window, summary, success_log)
+            md_path_str = _handle_markdown(
+                raw_msg, markdown_root, dry_run, verbose,
+                raw_msg.entry_id, folder_path_label, source, summary,
+            )
+            _handle_manifest(manifest_writer, raw_msg, folder_path_label, msg_path, md_path_str, window)
         except Exception as exc:
             summary.failed += 1
             if verbose:
-                console = _get_console()
-                console.print(f"[red]error[/red] entry_id={entry_id or 'unknown'} subject={subject!r}: {exc}")
-            _append_csv(
-                error_log,
-                ["window_start", "window_end", "entry_id", "subject", "error"],
-                {
-                    "window_start": window.start.isoformat(),
-                    "window_end": window.end.isoformat(),
-                    "entry_id": entry_id,
-                    "subject": subject,
-                    "error": str(exc),
-                },
-            )
-
+                err_msg = f"entry_id={raw_msg.entry_id or 'unknown'} subject={raw_msg.subject!r}: {exc}"
+                _get_console().print(f"[red]error[/red] {err_msg}")
+            _append_csv(error_log, ["window_start", "window_end", "entry_id", "subject", "error"], {
+                "window_start": window.start.isoformat(), "window_end": window.end.isoformat(),
+                "entry_id": raw_msg.entry_id, "subject": raw_msg.subject, "error": str(exc),
+            })
     return summary
+def _handle_message_save(
+    source: MessageSource,
+    raw_msg: Any,
+    msg_path: Path,
+    dry_run: bool,
+    verbose: bool,
+    window: Window,
+    summary: ExtractionSummary,
+    success_log: Path,
+) -> None:
+    if msg_path.exists():
+        summary.skipped_existing += 1
+        if verbose:
+            _get_console().print(f"[dim]skip existing[/dim] {msg_path}")
+        return
+
+    if not dry_run:
+        source.save_message(raw_msg, msg_path)
+
+    summary.exported += 1
+    if verbose:
+        console = _get_console()
+        action = "simulated save" if dry_run else "saved"
+        console.print(f"[green]{action}[/green] {msg_path}")
+    _append_csv(
+        success_log,
+        ["window_start", "window_end", "entry_id", "saved_path", "dry_run"],
+        {
+            "window_start": window.start.isoformat(),
+            "window_end": window.end.isoformat(),
+            "entry_id": raw_msg.entry_id,
+            "saved_path": str(msg_path),
+            "dry_run": str(dry_run).lower(),
+        },
+    )
+
+
+def _handle_markdown(
+    raw_msg: Any,
+    markdown_root: Path | None,
+    dry_run: bool,
+    verbose: bool,
+    entry_id: str,
+    folder_path_label: str,
+    source: MessageSource,
+    summary: ExtractionSummary,
+) -> str:
+    if markdown_root is None:
+        return ""
+
+    md_path = markdown_file_path(markdown_root, raw_msg.received_at, raw_msg.subject, entry_id)
+    if md_path.exists():
+        if verbose:
+            _get_console().print(f"[dim]skip existing markdown[/dim] {md_path}")
+        return str(md_path)
+
+    if dry_run:
+        if verbose:
+            _get_console().print(f"[dim]simulated markdown[/dim] {md_path}")
+        return str(md_path)
+
+    email = MarkdownEmail(
+        received_at=raw_msg.received_at,
+        subject=raw_msg.subject,
+        sender_name=raw_msg.sender_name,
+        sender_email=raw_msg.sender_email,
+        to=raw_msg.to,
+        cc=raw_msg.cc,
+        entry_id=entry_id,
+        source_msg_path=Path(),
+        folder_path=folder_path_label,
+        provider=source.__class__.__name__.replace("MessageSource", "").lower(),
+    )
+    markdown = render_email_markdown(email, body=raw_msg.body)
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+    md_path.write_text(markdown, encoding="utf-8")
+    summary.markdown_written += 1
+    if verbose:
+        _get_console().print(f"[dim]saved markdown[/dim] {md_path}")
+    return str(md_path)
+
+
+def _handle_manifest(
+    manifest_writer: ManifestWriter | None,
+    raw_msg: Any,
+    folder_path_label: str,
+    msg_path: Path,
+    md_path_str: str,
+    window: Window,
+) -> None:
+    if manifest_writer is None or manifest_writer.already_written(raw_msg.entry_id):
+        return
+
+    manifest_writer.write(
+        ManifestRow(
+            entry_id=raw_msg.entry_id,
+            received_at=raw_msg.received_at,
+            subject=raw_msg.subject,
+            sender_name=raw_msg.sender_name,
+            sender_email=raw_msg.sender_email,
+            to=raw_msg.to,
+            cc=raw_msg.cc,
+            folder=folder_path_label,
+            msg_path=str(msg_path),
+            md_path=md_path_str,
+            window_start=window.start.isoformat(),
+            window_end=window.end.isoformat(),
+        )
+    )
 
 
 def _get_console() -> Any:

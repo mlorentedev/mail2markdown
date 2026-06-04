@@ -59,23 +59,23 @@ def extract(
     try:
         if run_config is not None:
             config = load_run_config(run_config.resolve())
-            parsed_start = _parse_optional_date(config.start_date)
-            parsed_end = _parse_optional_date(config.end_date)
-            normalized_cadence = normalize_cadence(config.cadence)
+            parsed_start = _parse_optional_date(config.window.start_date)
+            parsed_end = _parse_optional_date(config.window.end_date)
+            normalized_cadence = normalize_cadence(config.window.cadence)
             folder_paths = config.folder_paths
             output_root = config.output_root
-            manual = config.manual
-            checkpoint_file = config.checkpoint_file
-            max_windows = config.max_windows
-            markdown_root = config.markdown_root
+            manual = config.window.manual
+            checkpoint_file = config.window.checkpoint_file
+            max_windows = config.window.max_windows
+            markdown_root = config.output.markdown_root
             dry_run = config.dry_run
             verbose = config.verbose
-            manifest = config.manifest
-            routing_report = config.routing_report
-            vault_root = config.vault_root
-            sync = config.sync
-            provider = config.provider or "outlook"
-            thunderbird_config = config.thunderbird_config
+            manifest = config.output.manifest
+            routing_report = config.output.routing_report
+            vault_root = config.output.vault_root
+            sync = config.output.sync
+            provider = config.provider.provider_name or "outlook"
+            thunderbird_config = config.provider.thunderbird_config
         else:
             parsed_start = _parse_optional_date(start_date)
             parsed_end = _parse_optional_date(end_date)
