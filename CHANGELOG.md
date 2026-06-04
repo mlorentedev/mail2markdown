@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0](https://github.com/mlorentedev/mail2markdown/compare/v0.2.1...v0.3.0) (2026-06-04)
+
+
+### Features
+
+* rename to mail2markdown + ThunderbirdExtractor ([#7](https://github.com/mlorentedev/mail2markdown/issues/7)) ([f9abea2](https://github.com/mlorentedev/mail2markdown/commit/f9abea241c616e52306c013f8541efeee2a37b36))
+
+
+### Bug Fixes
+
+* prevent encoding crash on non-ASCII subjects in CSV output ([#11](https://github.com/mlorentedev/mail2markdown/issues/11)) ([a61c419](https://github.com/mlorentedev/mail2markdown/commit/a61c41908bf1d085b2a3fad501d95c045b1ccf7d))
+
+
+### Documentation
+
+* migrate project-bound knowledge into docs/ (KPM-016) ([#9](https://github.com/mlorentedev/mail2markdown/issues/9)) ([c5ed2a4](https://github.com/mlorentedev/mail2markdown/commit/c5ed2a46f33b32b523b904f26e69b6beb8ac3fac))
+
 ## [0.2.1](https://github.com/mlorentedev/mail2markdown/compare/mail2markdown-v0.2.0...mail2markdown-v0.2.1) (2026-05-29)
 
 
