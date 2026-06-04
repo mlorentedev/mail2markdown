@@ -17,7 +17,6 @@ class ManifestRow:
     to: str
     cc: str
     folder: str
-    tags: str
     msg_path: str
     md_path: str
     window_start: str
