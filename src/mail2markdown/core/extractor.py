@@ -232,7 +232,6 @@ def _export_window(
                         to=raw_msg.to,
                         cc=raw_msg.cc,
                         folder=folder_path_label,
-                        tags="",
                         msg_path=str(msg_path),
                         md_path=md_path_str,
                         window_start=window.start.isoformat(),
