@@ -5,16 +5,16 @@ from __future__ import annotations
 import sys
 from unittest.mock import MagicMock
 
-# Re-import win32com from sys.modules so tests can use it directly
-_mock_win32 = sys.modules["win32com"]
-_mock_win32_client = sys.modules["win32com.client"]
-
 import pytest
 
 from mail2markdown.core.extractors.outlook import (
     _resolve_store,
     OutlookMessageSource,
 )
+
+# Reference mocks from conftest.py (already in sys.modules)
+_mock_win32 = sys.modules["win32com"]
+_mock_win32_client = sys.modules["win32com.client"]
 
 
 @pytest.fixture
@@ -65,12 +65,10 @@ class TestResolveStore:
 
 class TestOutlookMessageSourceMailbox:
     def test_default_constructor_no_mailbox(self) -> None:
-        _mock_win32_client.Dispatch.reset_mock()
         source = OutlookMessageSource()
         assert source._mailbox is None
 
     def test_constructor_with_mailbox(self) -> None:
-        _mock_win32_client.Dispatch.reset_mock()
         source = OutlookMessageSource(mailbox="Shared Mailbox")
         assert source._mailbox == "Shared Mailbox"
 

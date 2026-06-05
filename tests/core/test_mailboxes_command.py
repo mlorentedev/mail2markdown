@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import sys
-
-# Ensure win32com is mocked from conftest.py
-_mock_win32 = sys.modules["win32com"]
-_mock_win32_client = sys.modules["win32com.client"]
+from unittest.mock import MagicMock
 
 import pytest
 from typer.testing import CliRunner
 
 from mail2markdown.cli import app
+
+# Reference mocks from conftest.py (already in sys.modules)
+_mock_win32_client = sys.modules["win32com.client"]
 
 
 @pytest.fixture
@@ -56,6 +56,7 @@ class TestMailboxesCommand:
 
     def test_empty_stores(self, runner: CliRunner) -> None:
         _mock_win32_client.Dispatch.reset_mock()
+        _mock_win32_client.Dispatch.side_effect = None
         ns = MagicMock()
         ns.Stores = []
         _mock_win32_client.Dispatch.return_value.GetNamespace.return_value = ns
