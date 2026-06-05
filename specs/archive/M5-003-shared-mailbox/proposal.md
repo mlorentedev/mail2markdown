@@ -1,7 +1,7 @@
 ---
 id: "M5-003-shared-mailbox"
 type: spec
-status: draft
+status: archived
 created: "2026-06-04"
 tags: [spec, proposal, mailbox, outlook, shared-mailbox]
 template_version: "1.0"
