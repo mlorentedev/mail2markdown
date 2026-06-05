@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mail2markdown"
-version = "0.3.1"
+version = "0.4.0"
 description = "Local email extraction engine using COM interop or .mbox to export historical emails as Markdown."
 authors = ["mlorente <info@mlorente.dev>"]
 license = "MIT"

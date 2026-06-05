@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/mlorentedev/mail2markdown/compare/v0.3.1...v0.4.0) (2026-06-05)
+
+
+### Features
+
+* shared mailbox support + mailboxes discovery command ([#16](https://github.com/mlorentedev/mail2markdown/issues/16)) ([81eb869](https://github.com/mlorentedev/mail2markdown/commit/81eb8699eae04f064222220f5692bf6c5765faca))
+
 ## [0.3.1](https://github.com/mlorentedev/mail2markdown/compare/v0.3.0...v0.3.1) (2026-06-05)
 
 
