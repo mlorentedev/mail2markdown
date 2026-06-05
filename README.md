@@ -69,6 +69,8 @@ Copy-Item .\run.example.json .\run.json
 - `markdown_root`
 - `dry_run`
 - `verbose`
+- `mailbox` (optional): Outlook store name for shared/secondary mailboxes.
+  Use `mail2markdown mailboxes` to list available stores.
 
 Notes:
 - `folders` supports flat paths and tree nodes (`path` + optional `children`).
@@ -96,11 +98,37 @@ Import-Csv .\exports\logs\errors.csv | Select-Object -Last 10
 Get-ChildItem .\exports -Recurse -Filter *.msg | Select-Object -First 10 FullName
 ```
 
+## Discover available mailboxes
+
+Before configuring shared mailboxes, list the stores available in your Outlook profile:
+
+```powershell
+poetry run mail2markdown mailboxes
+```
+
+Output example:
+
+```
+         Outlook Stores
+┌───┬──────────────────────┬─────────────┐
+│ # │ Display Name         │ Store Type  │
+├───┼──────────────────────┼─────────────┤
+│ 1 │ John Doe             │ Exchange    │
+│ 2 │ Shared Mailbox - Team│ Mailbox     │
+│ 3 │ Archive              │ Archive     │
+└───┴──────────────────────┴─────────────┘
+3 store(s) found
+```
+
+Use the exact **Display Name** in the `"mailbox"` field of `run.json`.
+
 ## Common issues
 
 - `Folder failed ... segment ... not found`: the folder path does not exist in Outlook exactly as written.
 - `Dry run = true` with no files: expected behavior (simulation mode).
 - Missing old emails: Outlook may still be syncing cached history; wait for sync completion.
+- `Mailbox "X" not found`: run `mail2markdown mailboxes` to see exact store names.
+  Names are case-insensitive but must match exactly.
 
 ## Release strategy (GitHub)
 

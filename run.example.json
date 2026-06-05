@@ -15,5 +15,6 @@
   "max_windows": 1,
   "dry_run": true,
   "verbose": true,
-  "manifest": false
+  "manifest": false,
+  "mailbox": "Shared Mailbox - Team"
 }

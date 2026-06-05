@@ -18,7 +18,8 @@ __all__ = [
 def create_source(provider: str, **kwargs: object) -> MessageSource:
     """Factory function to create the appropriate MessageSource."""
     if provider == "outlook":
-        return OutlookMessageSource()
+        mailbox = kwargs.get("mailbox")
+        return OutlookMessageSource(mailbox=mailbox if isinstance(mailbox, str) else None)
     if provider == "thunderbird":
         profile_path = kwargs.get("profile_path")
         if not profile_path:

@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -29,10 +30,14 @@ def load_folder_paths(config_path: Path) -> list[str]:
     return _dedupe_keep_order(resolved)
 
 
-def checkpoint_name_for_folder(folder_path: str) -> str:
+def checkpoint_name_for_folder(folder_path: str, mailbox: str | None = None) -> str:
     normalized = normalize_folder_path(folder_path)
     token = _SAFE_TOKEN_CHARS.sub("-", normalized.lower()).strip("-")
-    return token or "folder"
+    token = token or "folder"
+    if mailbox:
+        store_hash = hashlib.sha1(mailbox.encode("utf-8")).hexdigest()[:8]
+        return f"{token}_{store_hash}"
+    return token
 
 
 def normalize_folder_path(folder_path: str) -> str:
