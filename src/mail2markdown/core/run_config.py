@@ -31,6 +31,7 @@ class OutputConfig:
 class ProviderConfig:
     provider_name: str
     thunderbird_config: dict[str, Any] | None
+    mailbox: str | None = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,7 @@ def load_run_config(config_path: Path) -> FileRunConfig:
     thunderbird_config = payload.get("thunderbird")
     if thunderbird_config is not None and not isinstance(thunderbird_config, dict):
         raise ValueError("run config key 'thunderbird' must be an object.")
+    mailbox = _read_optional_string(payload=payload, key="mailbox")
 
     return FileRunConfig(
         folder_paths=folder_paths,
@@ -87,7 +89,7 @@ def load_run_config(config_path: Path) -> FileRunConfig:
             vault_root=vault_root,
             sync=sync,
         ),
-        provider=ProviderConfig(provider_name=provider, thunderbird_config=thunderbird_config),
+        provider=ProviderConfig(provider_name=provider, thunderbird_config=thunderbird_config, mailbox=mailbox),
         dry_run=dry_run,
         verbose=verbose,
     )

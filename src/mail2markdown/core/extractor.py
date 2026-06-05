@@ -133,6 +133,8 @@ def _create_source(provider: str, config: dict[str, Any]) -> MessageSource:
     kwargs: dict[str, object] = {}
     if "profile_path" in config:
         kwargs["profile_path"] = config["profile_path"]
+    if "mailbox" in config and config["mailbox"]:
+        kwargs["mailbox"] = config["mailbox"]
     return create_source(provider, **kwargs)
 
 

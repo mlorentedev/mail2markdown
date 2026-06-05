@@ -46,6 +46,9 @@ src = ["src", "tests"]
 select = ["E", "W", "F", "I", "B"]
 ignore = ["B008"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E402", "I001"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"

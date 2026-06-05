@@ -76,6 +76,7 @@ def extract(
             sync = config.output.sync
             provider = config.provider.provider_name or "outlook"
             thunderbird_config = config.provider.thunderbird_config
+            mailbox = config.provider.mailbox
         else:
             parsed_start = _parse_optional_date(start_date)
             parsed_end = _parse_optional_date(end_date)
@@ -85,7 +86,7 @@ def extract(
         if sync:
             if parsed_start is None:
                 chk = _resolve_checkpoint_for_folder(
-                    checkpoint_file, output_root, folder_paths[0], len(folder_paths) > 1
+                    checkpoint_file, output_root, folder_paths[0], len(folder_paths) > 1, mailbox
                 )
                 if chk is None:
                     chk = output_root.resolve() / "checkpoint.json"
@@ -114,6 +115,7 @@ def extract(
                 output_root=output_root,
                 folder_path=target_folder,
                 multi_folder=multi_folder,
+                mailbox=mailbox,
             )
             try:
                 folder_summary = run_extraction(
@@ -126,7 +128,7 @@ def extract(
                     checkpoint_path=effective_checkpoint,
                     dry_run=dry_run,
                     provider=provider,
-                    provider_config=thunderbird_config or {},
+                    provider_config={**(thunderbird_config or {}), "mailbox": mailbox},
                     markdown_root=markdown_root,
                     verbose=verbose,
                     max_windows=max_windows,
@@ -177,6 +179,33 @@ def extract(
         raise typer.Exit(code=1)
 
 
+
+@app.command()
+def mailboxes() -> None:
+    """List available Outlook mailboxes/stores."""
+    try:
+        import win32com.client
+
+        outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+        stores = outlook.Stores
+
+        table = Table(title="Outlook Stores")
+        table.add_column("#", justify="right")
+        table.add_column("Display Name")
+        table.add_column("Store Type")
+
+        for idx, store in enumerate(stores, 1):
+            name = str(getattr(store, "Name", "<unknown>")).strip()
+            store_type = str(getattr(store, "StoreType", "<unknown>")).strip()
+            table.add_row(str(idx), name, store_type)
+
+        console.print(table)
+        console.print(f"[dim]{len(stores)} store(s) found[/dim]")
+    except Exception as exc:
+        console.print(f"[red]Cannot connect to Outlook:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+
 def _parse_optional_date(value: str | None) -> date | None:
     if value is None:
         return None
@@ -184,12 +213,13 @@ def _parse_optional_date(value: str | None) -> date | None:
 
 
 def _resolve_checkpoint_for_folder(
-    checkpoint_file: Path | None, output_root: Path, folder_path: str, multi_folder: bool
+    checkpoint_file: Path | None, output_root: Path, folder_path: str, multi_folder: bool,
+    mailbox: str | None = None,
 ) -> Path | None:
     if not multi_folder:
         return checkpoint_file
 
-    token = checkpoint_name_for_folder(folder_path)
+    token = checkpoint_name_for_folder(folder_path, mailbox=mailbox)
     if checkpoint_file is None:
         return output_root / "checkpoints" / f"{token}.json"
     if checkpoint_file.suffix.lower() == ".json":

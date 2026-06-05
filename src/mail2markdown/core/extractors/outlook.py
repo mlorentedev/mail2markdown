@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
@@ -15,8 +16,10 @@ OL_MSG_UNICODE = 3
 class OutlookMessageSource(MessageSource):
     """Retrieves messages from Outlook via COM/MAPI."""
 
-    def __init__(self) -> None:  # noqa: D107
+    def __init__(self, mailbox: str | None = None) -> None:  # noqa: D107
         self._namespace: Any | None = None
+        self._mailbox: str | None = mailbox
+        self._store: Any | None = None
 
     def _ensure_namespace(self) -> Any:
         if self._namespace is None:
@@ -25,14 +28,21 @@ class OutlookMessageSource(MessageSource):
             self._namespace = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         return self._namespace
 
+    def _ensure_store(self) -> Any:
+        namespace = self._ensure_namespace()
+        if self._mailbox is None:
+            return namespace.DefaultStore.GetRootFolder()
+        return _resolve_store(namespace, self._mailbox)
+
     def iter_messages(  # noqa: D102
         self,
         folder_path: str,
         start_date: Any,
         end_date: Any,
     ) -> Iterator[RawMessage]:
-        namespace = self._ensure_namespace()
-        folder = _resolve_folder(namespace, folder_path)
+        self._ensure_namespace()  # ensures COM connection is established
+        root_folder = self._ensure_store()
+        folder = _walk_folder_path(root_folder, folder_path.split(chr(92)))
         items = folder.Items
         items.Sort("[ReceivedTime]", False)
 
@@ -74,25 +84,50 @@ class OutlookMessageSource(MessageSource):
     def resolve_folder_source(self, folder_path: str) -> str | None:  # noqa: D102
         return folder_path
 
+    def get_store_hash(self) -> str:
+        """Return first 8 chars of SHA1 hash of store name for checkpoint isolation."""
+        store = self._ensure_store()
+        store_name = str(getattr(store, "Name", "default"))
+        return hashlib.sha1(store_name.encode("utf-8")).hexdigest()[:8]
 
-def _resolve_folder(namespace: Any, folder_path: str) -> Any:
-    parts = [part.strip() for part in folder_path.split("\\") if part.strip()]
-    if not parts:
-        raise ValueError("Folder path cannot be empty.")
 
-    if parts[0].lower() == "inbox":
-        return _walk_folder_path(namespace.GetDefaultFolder(OL_FOLDER_INBOX), parts[1:])
+def _resolve_store(namespace: Any, mailbox_name: str) -> Any:
+    """Find a store by display name (case-insensitive).
 
-    try:
-        root_folder = namespace.DefaultStore.GetRootFolder()
-    except Exception as exc:
-        raise ValueError("Cannot resolve default Outlook store root folder.") from exc
-    return _walk_folder_path(root_folder, parts)
+    Raises ValueError if not found or if multiple stores match.
+    """
+    stores = namespace.Stores
+    matches: list[str] = []
+    for store in stores:
+        store_name = str(getattr(store, "Name", "")).strip()
+        if store_name.lower() == mailbox_name.lower():
+            matches.append(store_name)
+
+    if not matches:
+        available = [str(getattr(s, "Name", "")).strip() for s in stores]
+        raise ValueError(
+            f'Mailbox "{mailbox_name}" not found. Available: {", ".join(available)}'
+        )
+
+    if len(matches) > 1:
+        raise ValueError(
+            f'Ambiguous mailbox "{mailbox_name}". Matches: {", ".join(matches)}'
+        )
+
+    # Return the root folder of the matching store
+    for store in stores:
+        if str(getattr(store, "Name", "")).strip().lower() == mailbox_name.lower():
+            return store.GetRootFolder()
+
+    raise ValueError(f'Mailbox "{mailbox_name}" matched but root folder unavailable.')
 
 
 def _walk_folder_path(start_folder: Any, segments: list[str]) -> Any:
     folder = start_folder
     for segment in segments:
+        segment = segment.strip()
+        if not segment:
+            continue
         folder = _get_child_folder(folder, segment)
     return folder
 
