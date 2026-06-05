@@ -1,7 +1,7 @@
 ---
 id: "M5-extraction-pipeline"
 type: spec
-status: implementing
+status: archived
 created: "2026-05-26"
 tags: [spec, proposal, pipeline, automation, vault]
 template_version: "1.0"
