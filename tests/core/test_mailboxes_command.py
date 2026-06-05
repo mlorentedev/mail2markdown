@@ -1,14 +1,12 @@
+"""Tests for mailboxes discovery CLI command."""
+
 from __future__ import annotations
 
 import sys
-from unittest.mock import MagicMock, patch
 
-# Mock win32com so tests run on Linux without pywin32
-_mock_win32 = MagicMock()
-_mock_win32_client = MagicMock()
-sys.modules["win32com"] = _mock_win32
-sys.modules["win32com.client"] = _mock_win32_client
-sys.modules["win32com.client.constants"] = MagicMock()
+# Ensure win32com is mocked from conftest.py
+_mock_win32 = sys.modules["win32com"]
+_mock_win32_client = sys.modules["win32com.client"]
 
 import pytest
 from typer.testing import CliRunner
@@ -23,7 +21,6 @@ def runner() -> CliRunner:
 
 class TestMailboxesCommand:
     def test_list_stores(self, runner: CliRunner) -> None:
-        import win32com.client
         store1 = MagicMock()
         store1.Name = "John Doe"
         store1.StoreType = "Exchange"
@@ -35,7 +32,7 @@ class TestMailboxesCommand:
         store3.StoreType = "Archive"
         ns = MagicMock()
         ns.Stores = [store1, store2, store3]
-        win32com.client.Dispatch.return_value.GetNamespace.return_value = ns
+        _mock_win32_client.Dispatch.return_value.GetNamespace.return_value = ns
 
         result = runner.invoke(app, ["mailboxes"])
 
@@ -46,8 +43,7 @@ class TestMailboxesCommand:
         assert "3 store(s)" in result.stdout
 
     def test_outlook_connection_failure(self, runner: CliRunner) -> None:
-        import win32com.client
-        win32com.client.Dispatch.side_effect = Exception("Outlook not running")
+        _mock_win32_client.Dispatch.side_effect = Exception("Outlook not running")
 
         result = runner.invoke(app, ["mailboxes"])
 
@@ -55,15 +51,14 @@ class TestMailboxesCommand:
         assert "Cannot connect to Outlook" in result.stdout
 
         # Reset for other tests
-        win32com.client.Dispatch.side_effect = None
-        win32com.client.Dispatch.reset_mock()
+        _mock_win32_client.Dispatch.side_effect = None
+        _mock_win32_client.Dispatch.reset_mock()
 
     def test_empty_stores(self, runner: CliRunner) -> None:
-        import win32com.client
-        win32com.client.Dispatch.reset_mock()
+        _mock_win32_client.Dispatch.reset_mock()
         ns = MagicMock()
         ns.Stores = []
-        win32com.client.Dispatch.return_value.GetNamespace.return_value = ns
+        _mock_win32_client.Dispatch.return_value.GetNamespace.return_value = ns
 
         result = runner.invoke(app, ["mailboxes"])
 

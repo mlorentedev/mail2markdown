@@ -1,15 +1,13 @@
+"""Tests for shared mailbox support in Outlook extractor."""
+
 from __future__ import annotations
 
 import sys
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-# Mock win32com so tests run on Linux without pywin32
-_mock_win32 = MagicMock()
-_mock_win32_client = MagicMock()
-sys.modules["win32com"] = _mock_win32
-sys.modules["win32com.client"] = _mock_win32_client
-sys.modules["win32com.client.constants"] = MagicMock()
+# Re-import win32com from sys.modules so tests can use it directly
+_mock_win32 = sys.modules["win32com"]
+_mock_win32_client = sys.modules["win32com.client"]
 
 import pytest
 
@@ -67,21 +65,20 @@ class TestResolveStore:
 
 class TestOutlookMessageSourceMailbox:
     def test_default_constructor_no_mailbox(self) -> None:
-        with patch("win32com.client.Dispatch"):
-            source = OutlookMessageSource()
+        _mock_win32_client.Dispatch.reset_mock()
+        source = OutlookMessageSource()
         assert source._mailbox is None
 
     def test_constructor_with_mailbox(self) -> None:
-        with patch("win32com.client.Dispatch"):
-            source = OutlookMessageSource(mailbox="Shared Mailbox")
+        _mock_win32_client.Dispatch.reset_mock()
+        source = OutlookMessageSource(mailbox="Shared Mailbox")
         assert source._mailbox == "Shared Mailbox"
 
     def test_ensure_store_uses_default_when_no_mailbox(self) -> None:
-        import win32com.client
         mock_ns = MagicMock()
         mock_root = MagicMock()
         mock_ns.DefaultStore.GetRootFolder.return_value = mock_root
-        win32com.client.Dispatch.return_value.GetNamespace.return_value = mock_ns
+        _mock_win32_client.Dispatch.return_value.GetNamespace.return_value = mock_ns
 
         source = OutlookMessageSource()
         store = source._ensure_store()
@@ -89,26 +86,24 @@ class TestOutlookMessageSourceMailbox:
         mock_ns.DefaultStore.GetRootFolder.assert_called_once()
 
     def test_ensure_store_uses_named_store(self) -> None:
-        import win32com.client
         mock_ns = MagicMock()
         mock_root = MagicMock()
         mock_store = MagicMock()
         mock_store.Name = "Shared Mailbox"
         mock_store.GetRootFolder.return_value = mock_root
         mock_ns.Stores = [mock_store]
-        win32com.client.Dispatch.return_value.GetNamespace.return_value = mock_ns
+        _mock_win32_client.Dispatch.return_value.GetNamespace.return_value = mock_ns
 
         source = OutlookMessageSource(mailbox="Shared Mailbox")
         store = source._ensure_store()
         assert store == mock_root
 
     def test_get_store_hash(self) -> None:
-        import win32com.client
         mock_ns = MagicMock()
         mock_root = MagicMock()
         mock_root.Name = "Test Store"
         mock_ns.DefaultStore.GetRootFolder.return_value = mock_root
-        win32com.client.Dispatch.return_value.GetNamespace.return_value = mock_ns
+        _mock_win32_client.Dispatch.return_value.GetNamespace.return_value = mock_ns
 
         source = OutlookMessageSource()
         h = source.get_store_hash()

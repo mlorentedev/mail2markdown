@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from mail2markdown.core.run_config import load_run_config
 
 
