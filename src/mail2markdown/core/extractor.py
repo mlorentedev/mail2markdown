@@ -151,7 +151,7 @@ def _export_window(
                 raw_msg, markdown_root, dry_run, verbose,
                 raw_msg.entry_id, folder_path_label, source, summary,
             )
-            _handle_manifest(manifest_writer, raw_msg, folder_path_label, msg_path, md_path_str, window)
+            _handle_manifest(manifest_writer, raw_msg, folder_path_label, msg_path, md_path_str, window, dry_run)
         except Exception as exc:
             summary.failed += 1
             if verbose:
@@ -251,8 +251,11 @@ def _handle_manifest(
     msg_path: Path,
     md_path_str: str,
     window: Window,
+    dry_run: bool,
 ) -> None:
     if manifest_writer is None or manifest_writer.already_written(raw_msg.entry_id):
+        return
+    if dry_run:
         return
 
     manifest_writer.write(
