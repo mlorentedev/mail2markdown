@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/mlorentedev/mail2markdown/compare/v0.3.0...v0.3.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* skip manifest write in dry-run mode (TE-005) ([#14](https://github.com/mlorentedev/mail2markdown/issues/14)) ([2bb5007](https://github.com/mlorentedev/mail2markdown/commit/2bb50074eacbfe3e9af6094b84ab023cbbf90e0f))
+
 ## [0.3.0](https://github.com/mlorentedev/mail2markdown/compare/v0.2.1...v0.3.0) (2026-06-04)
 
 
