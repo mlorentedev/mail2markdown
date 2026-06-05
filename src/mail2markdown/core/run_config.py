@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from dataclasses import dataclass
@@ -9,24 +9,39 @@ from mail2markdown.core.folders_config import load_folder_paths, normalize_folde
 
 
 @dataclass(frozen=True)
-class FileRunConfig:
-    folder_paths: list[str]
-    output_root: Path
+class WindowConfig:
     cadence: str
     start_date: str | None
     end_date: str | None
     manual: bool
     checkpoint_file: Path | None
     max_windows: int | None
+
+
+@dataclass(frozen=True)
+class OutputConfig:
     markdown_root: Path | None
-    dry_run: bool
-    verbose: bool
     manifest: bool
     routing_report: bool
     vault_root: Path | None
     sync: bool
-    provider: str
+
+
+@dataclass(frozen=True)
+class ProviderConfig:
+    provider_name: str
     thunderbird_config: dict[str, Any] | None
+
+
+@dataclass(frozen=True)
+class FileRunConfig:
+    folder_paths: list[str]
+    output_root: Path
+    window: WindowConfig
+    output: OutputConfig
+    provider: ProviderConfig
+    dry_run: bool
+    verbose: bool
 
 
 def load_run_config(config_path: Path) -> FileRunConfig:
@@ -57,21 +72,24 @@ def load_run_config(config_path: Path) -> FileRunConfig:
     return FileRunConfig(
         folder_paths=folder_paths,
         output_root=output_root,
-        cadence=cadence,
-        start_date=start_date,
-        end_date=end_date,
-        manual=manual,
-        checkpoint_file=checkpoint_file,
-        max_windows=max_windows,
-        markdown_root=markdown_root,
+        window=WindowConfig(
+            cadence=cadence,
+            start_date=start_date,
+            end_date=end_date,
+            manual=manual,
+            checkpoint_file=checkpoint_file,
+            max_windows=max_windows,
+        ),
+        output=OutputConfig(
+            markdown_root=markdown_root,
+            manifest=manifest,
+            routing_report=routing_report,
+            vault_root=vault_root,
+            sync=sync,
+        ),
+        provider=ProviderConfig(provider_name=provider, thunderbird_config=thunderbird_config),
         dry_run=dry_run,
         verbose=verbose,
-        manifest=manifest,
-        routing_report=routing_report,
-        vault_root=vault_root,
-        sync=sync,
-        provider=provider,
-        thunderbird_config=thunderbird_config,
     )
 
 
