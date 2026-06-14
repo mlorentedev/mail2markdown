@@ -25,7 +25,7 @@ rich = "^13.9.4"
 pywin32 = { version = "^308", markers = "platform_system == 'Windows'" }
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.4"
+pytest = ">=8.3.4,<10.0.0"
 pytest-cov = "^6.0.0"
 ruff = "^0.9.9"
 mypy = "^1.15.0"
