@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/mlorentedev/mail2markdown/compare/v0.4.0...v0.4.1) (2026-08-10)
+
+
+### Bug Fixes
+
+* **ci:** add PRs to bitácora board via gh CLI ([0e3dc86](https://github.com/mlorentedev/mail2markdown/commit/0e3dc86e66cb9d65842f99cec10fc42e45d84093))
+
 ## [0.4.0](https://github.com/mlorentedev/mail2markdown/compare/v0.3.1...v0.4.0) (2026-06-05)
 
 
