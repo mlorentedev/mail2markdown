@@ -15,24 +15,41 @@ on:
 
 jobs:
   add-to-project:
-    # Fork PRs run without repository secrets — BITACORA_PAT would be empty and the
-    # job would fail (Codex review on kubelab#237). Skip them; fork PRs reach the
+    # Fork PRs and Dependabot PRs run without repository secrets — BITACORA_PAT
+    # would be empty and the job would fail (Codex review on kubelab#237; GitHub
+    # does not expose secrets to Dependabot PRs). Skip both; those PRs reach the
     # board via the rollout backfill or a manual item-add.
-    if: github.event_name == 'issues' || github.event.pull_request.head.repo.fork == false
+    if: github.event_name == 'issues' || (github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     steps:
-      # Issues: use the official action (works fine for issues)
+      # Issues: use the official action (works fine for issues).
+      # Pinned to the v2.0.0 commit SHA (supply-chain security: mutable
+      # semver tags can be moved).
       - name: Add issue to project
         if: github.event_name == 'issues'
-        uses: actions/add-to-project@v1.0.2
+        uses: actions/add-to-project@5afcf98fcd03f1c2f92c3c83f58ae24323cc57fd # v2.0.0
         with:
           project-url: https://github.com/users/mlorentedev/projects/1
           github-token: ${{ secrets.BITACORA_PAT }}
 
-      # PRs: use gh CLI directly (the action doesn't support PRs)
+      # PRs: the gh project CLI fails with "unknown owner type" under a
+      # fine-grained PAT (see bitacora-status.yml note), so use the same
+      # github-script + GraphQL path that is proven there. The PR node id is
+      # read from the event payload, so no shell templating is involved.
       - name: Add PR to project
         if: github.event_name == 'pull_request'
-        run: |
-          gh project item-add 1 --owner mlorentedev --url "${{ github.event.pull_request.html_url }}"
-        env:
-          GH_TOKEN: ${{ secrets.BITACORA_PAT }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          github-token: ${{ secrets.BITACORA_PAT }}
+          script: |
+            const projectId = 'PVT_kwHOAM7xJs4BZ6GY';
+            const contentId = context.payload.pull_request.node_id;
+            await github.graphql(
+              `mutation($projectId: ID!, $contentId: ID!) {
+                addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
+                  item { id }
+                }
+              }`,
+              { projectId, contentId },
+            );
+            core.info(`Added PR #${context.payload.pull_request.number} to the bitácora board`);
