@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Issues: use the official action (works fine for issues).
-      # Pinned to the v1.0.2 commit SHA (supply-chain security — mutable
+      # Pinned to the v2.0.0 commit SHA (supply-chain security: mutable
       # semver tags can be moved).
       - name: Add issue to project
         if: github.event_name == 'issues'
@@ -34,11 +34,11 @@ jobs:
 
       # PRs: the gh project CLI fails with "unknown owner type" under a
       # fine-grained PAT (see bitacora-status.yml note), so use the same
-      # github-script + GraphQL path that is proven there. PR_URL via env to
-      # avoid shell template injection (zizmor).
+      # github-script + GraphQL path that is proven there. The PR node id is
+      # read from the event payload, so no shell templating is involved.
       - name: Add PR to project
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           github-token: ${{ secrets.BITACORA_PAT }}
           script: |
