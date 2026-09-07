@@ -4,12 +4,6 @@ type: adr
 status: active
 created: "2026-03-07"
 owner: manu
----
-
----
-id: "adr-001-strategy-pattern-extractors"
-type: adr
-status: active
 tags: [architecture, design-pattern]
 ---
 # ADR 001: Strategy Pattern for Email Extractors

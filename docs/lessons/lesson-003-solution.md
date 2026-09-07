@@ -7,6 +7,8 @@ owner: manu
 tags: [mail2markdown, lesson]
 ---
 
+> Part of a three-lesson series on mocking `win32com` in CI: see [lesson-001-context.md](lesson-001-context.md) and [lesson-002-problem.md](lesson-002-problem.md).
+
 # Solution
 
 Mock `win32com` in `sys.modules` at the top of the test file, **before** any imports that transitively import it:
