@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.2](https://github.com/mlorentedev/mail2markdown/compare/v0.4.1...v0.4.2) (2026-09-07)
+
+
+### Bug Fixes
+
+* **ci:** add PRs to bitácora via GraphQL, not gh project CLI ([#23](https://github.com/mlorentedev/mail2markdown/issues/23)) ([00e38c6](https://github.com/mlorentedev/mail2markdown/commit/00e38c6d0ec2156cf1fd142d4065ca60051ee084))
+
+
+### Documentation
+
+* point docs/README.md at the lessons index ([#22](https://github.com/mlorentedev/mail2markdown/issues/22)) ([04633c7](https://github.com/mlorentedev/mail2markdown/commit/04633c747f6b2345e4aa186da5ada9090369b929))
+
 ## [0.4.1](https://github.com/mlorentedev/mail2markdown/compare/v0.4.0...v0.4.1) (2026-08-10)
 
 
