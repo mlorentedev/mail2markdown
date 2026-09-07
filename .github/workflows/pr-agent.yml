@@ -221,10 +221,16 @@ jobs:
           fi
           # --slurp merges the pages into one array first; without it --paginate --jq
           # prints one count per page and the comparison below reads only the first.
+          # gh refuses `--slurp` together with `--jq` ("the --slurp option is not
+          # supported with --jq or --template", measured on run 34079023052 of this
+          # branch, where the guard died on gh's usage text instead of answering), so
+          # the filter runs in a separate jq over the slurped pages.
           found=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-            --paginate --slurp --jq "[.[][] | select(.user.login == \"github-actions[bot]\"
-                                          and (.updated_at >= \"${STARTED}\")
-                                          and (.body | contains(\"${marker}\")))] | length")
+            --paginate --slurp \
+            | jq --arg started "${STARTED}" --arg marker "${marker}" \
+                '[.[][] | select(.user.login == "github-actions[bot]"
+                                 and (.updated_at >= $started)
+                                 and (.body | contains($marker)))] | length')
           if [ "$found" -gt 0 ]; then
             echo "review published (marker: ${marker})"
             exit 0
