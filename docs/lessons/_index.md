@@ -11,6 +11,6 @@ tags: [mail2markdown, lessons, index]
 
 | # | Date | Title | File | Tags |
 |---|---|---|---|---|
-| 001 | 2026-05-01 | Context | [[docs/lessons/lesson-001-context\|lesson-001-context.md]] |  |
-| 002 | 2026-05-01 | Problem | [[docs/lessons/lesson-002-problem\|lesson-002-problem.md]] |  |
-| 003 | 2026-05-01 | Solution | [[docs/lessons/lesson-003-solution\|lesson-003-solution.md]] |  |
+| 001 | 2026-05-01 | Context | [lesson-001-context.md](lesson-001-context.md) |  |
+| 002 | 2026-05-01 | Problem | [lesson-002-problem.md](lesson-002-problem.md) |  |
+| 003 | 2026-05-01 | Solution | [lesson-003-solution.md](lesson-003-solution.md) |  |
