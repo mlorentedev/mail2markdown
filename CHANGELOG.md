@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/mlorentedev/mail2markdown/compare/v0.4.2...v0.4.3) (2026-10-03)
+
+
+### Bug Fixes
+
+* **ci:** move PR-Agent off the retired mimo-v2.5 model ([#29](https://github.com/mlorentedev/mail2markdown/issues/29)) ([5bf1e91](https://github.com/mlorentedev/mail2markdown/commit/5bf1e913021366f547764baf9ed4705112f92e94))
+
 ## [0.4.2](https://github.com/mlorentedev/mail2markdown/compare/v0.4.1...v0.4.2) (2026-09-07)
 
 
