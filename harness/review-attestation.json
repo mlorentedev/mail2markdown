@@ -57,7 +57,8 @@
       "login": "github-actions",
       "declined_markers": [],
       "review_markers": [
-        "## PR Reviewer Guide"
+        "## PR Reviewer Guide",
+        "## Incremental PR Reviewer Guide"
       ],
       "why": "PR-Agent (see .github/workflows/pr-agent.yml) runs under GITHUB_TOKEN and publishes through the COMMENTS api, so its reviews never enter reviews[] and a classifier that looked only at reviews would read every PR-Agent-reviewed PR as unattested. The marker is the `review` command's own heading. `## PR Code Suggestions` is deliberately NOT here — suggestions are not a review, which is also why auto_improve is off on the automatic path. MARKER PROVENANCE: verified in the sibling ports before being declared here — kubelab has 215 PR comments carrying '## PR Reviewer Guide' posted by github-actions[bot] (spot-checked on #1500, #1362) and dotfiles has 172. It has NEVER been observed in mail2markdown: the only github-actions[bot] comments here are release-please's 'Created releases' notices (#12, #15, #17, #19), which carry no heading and match nothing. The first green run of pr-agent on a mail2markdown PR is the verification, and until then this entry is a declaration of intent, not of an actor."
     }
@@ -84,5 +85,17 @@
         "why": "Measured on #12, #15, #17 and #19: exactly these four paths on every one, because release-please-config.json bumps the version in pyproject.toml and the package __init__ in addition to the manifest and changelog. Matched by DIFF SIGNATURE with set equality, never by author or branch — the author here is github-actions[bot] under the workflow token and the branch is release-please--branches--master, but an author rule would break the day the workflow moves to a PAT and a branch rule would let any branch named to match walk past the gate. The moment such a PR touches one more file the exemption stops applying, and it stops applying just as surely if one declared file is not touched. This is not 'small PRs need no review': a release commit mechanically restates commits that were each reviewed when they landed, and reporting `declined` on it says something false."
       }
     ]
+  },
+  "classification": {
+    "prefix": "Class: ",
+    "classes": [
+      "REAL",
+      "THEORETICAL",
+      "SPECULATIVE"
+    ],
+    "reviewers": [
+      "github-actions"
+    ],
+    "why": "A finding's class is read from a whole line equal to prefix + class, never parsed out of prose; a finding with no such line, or two that disagree, is unclassified and goes to a human. .pr_agent.toml asks the reviewer for exactly these lines in extra_instructions, with the paragraph shared by every repository that calls the ci-workflows pr-agent workflow. reviewers names PR-Agent (github-actions) only, because CodeRabbit writes its own severity format. Shape copied from dotfiles (TOOL-017)."
   }
 }
