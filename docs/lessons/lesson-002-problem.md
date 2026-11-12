@@ -1,7 +1,8 @@
 ---
-id: lesson-002-problem
+id: "lesson-002-problem"
 type: lesson
 status: active
+title: "Problem"
 created: "2026-05-01"
 owner: manu
 tags: [mail2markdown, lesson]

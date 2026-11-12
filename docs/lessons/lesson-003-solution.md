@@ -1,7 +1,8 @@
 ---
-id: lesson-003-solution
+id: "lesson-003-solution"
 type: lesson
 status: active
+title: "Solution"
 created: "2026-05-01"
 owner: manu
 tags: [mail2markdown, lesson]

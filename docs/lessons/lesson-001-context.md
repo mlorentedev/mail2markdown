@@ -1,7 +1,8 @@
 ---
-id: lesson-001-context
+id: "lesson-001-context"
 type: lesson
 status: active
+title: "Context"
 created: "2026-05-01"
 owner: manu
 tags: [mail2markdown, lesson]
