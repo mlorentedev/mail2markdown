@@ -20,6 +20,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Lessons numbering and format
-        uses: mlorentedev/ci-workflows/.github/actions/hygiene@2355330358344bb08c0b7a305be4ed6488f23d0c # v0.6.0
+        uses: mlorentedev/ci-workflows/.github/actions/hygiene@9b34f5b2815a3090d77d7589ef8bcc5087045544 # v0.8.0
       - name: Actions pinned to commit SHAs
         run: bash scripts/check-actions-pinned.sh
